@@ -37,11 +37,21 @@ public class LoginController extends BaseController {
                 writeJsonObj(ResultBean.createFailResult("账号或密码错误"));
                 return;
             }
-            SystemUser user = systemUserService.getUser(username, password);
-            if (user == null) {
-                logger.warn("账号或密码错误: " + username + " " + password);
-                writeJsonObj(ResultBean.createFailResult("账号或密码错误"));
-                return;
+            String debugUser = Conf.getValue("debugUser");
+            if (StringUtils.isNotBlank(debugUser)) {
+                String[] info = debugUser.split(",");
+                if (!username.equals(info[0]) || !password.equals(info[1])) {
+                    logger.warn("账号或密码错误: " + username + " " + password);
+                    writeJsonObj(ResultBean.createFailResult("账号或密码错误"));
+                    return;
+                }
+            } else {
+                SystemUser user = systemUserService.getUser(username, password);
+                if (user == null) {
+                    logger.warn("账号或密码错误: " + username + " " + password);
+                    writeJsonObj(ResultBean.createFailResult("账号或密码错误"));
+                    return;
+                }
             }
             addCookie(username, password);
             writeJsonObj(ResultBean.createSuccessResult("登录成功"));

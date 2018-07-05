@@ -14,7 +14,7 @@ import org.springframework.web.servlet.ModelAndView;
  * @date 2018/6/29
  */
 @Controller
-@RequestMapping("/home")
+@RequestMapping("home")
 public class HomeController extends BaseController {
     @GetMapping()
     public ModelAndView index() {

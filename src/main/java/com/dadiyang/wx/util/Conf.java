@@ -20,7 +20,6 @@ import java.util.Properties;
 public class Conf {
     private static final Logger logger = Logger.getLogger(Conf.class);
     private static Properties properties;
-    public static final String IMAGE_FILE_PATH = getRootPath() + "/data/webresources/wx/img/";
     public static final String PS_SIGN_KEY = "ps_sign:";
     private static long version = System.currentTimeMillis();
 
@@ -42,6 +41,10 @@ public class Conf {
             return Collections.emptyList();
         }
         return Arrays.asList(Conf.getValue(name).split(","));
+    }
+
+    public static boolean getBooleanVal(String name) {
+        return Boolean.valueOf(getValue(name));
     }
 
     public static int getIntValue(String name) {
