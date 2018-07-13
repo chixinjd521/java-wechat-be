@@ -23,13 +23,11 @@ import java.util.List;
 @RequestMapping("api/wx")
 public class WxController extends BaseController {
     private static final Logger logger = Logger.getLogger(WxController.class);
-    @Autowired
-    private WxService wxService;
+    private final WxService wxService;
 
-    @GetMapping("getChatHistory")
-    public void getChatHistory() {
-        // todo 查询聊天记录
-        System.out.println("getChatHistory");
+    @Autowired
+    public WxController(WxService wxService) {
+        this.wxService = wxService;
     }
 
     /**

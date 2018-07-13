@@ -25,7 +25,7 @@ import java.io.IOException;
 public class LoginInterceptor implements HandlerInterceptor {
     private static final Logger logger = Logger.getLogger(LoginInterceptor.class);
     private static final String LOGIN_URI = "/api/login";
-    public static final String API_PRE = "/api";
+    private static final String API_PRE = "/api";
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object o) {
@@ -46,7 +46,7 @@ public class LoginInterceptor implements HandlerInterceptor {
             }
         }
         // cookie校验不通过
-        String loginUrl = "/login.jsp?redirectUrl=" + request.getRequestURL().toString();
+        String loginUrl = Conf.getValue("loginUrl") + request.getRequestURL().toString();
         // 调用 api 则返回 json 格式数据
         if (request.getRequestURI().startsWith(API_PRE)) {
             ResultBean<String> rs = new ResultBean<>();

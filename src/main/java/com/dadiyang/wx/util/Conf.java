@@ -2,10 +2,7 @@ package com.dadiyang.wx.util;
 
 import org.apache.log4j.Logger;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -24,7 +21,7 @@ public class Conf {
     private static long version = System.currentTimeMillis();
 
     static {
-        try (InputStream in = Conf.class.getClassLoader().getResourceAsStream("server.properties")) {
+        try (InputStream in = new FileInputStream(getRootPath() + "/java-wechat-be/conf/server.properties")) {
             properties = new Properties();
             properties.load(new InputStreamReader(in, "utf-8"));
         } catch (IOException e) {
@@ -51,11 +48,10 @@ public class Conf {
         return Integer.parseInt(properties.getProperty(name));
     }
 
-    public static String getRootPath() {
+    private static String getRootPath() {
         File file = new File(System.getProperty("user.dir"));
         String path = file.getAbsolutePath().replace('\\', '/');
-        path = path.substring(0, path.indexOf('/'));
-        return path;
+        return path.substring(0, path.indexOf('/'));
     }
 
     public static long getVersion() {
