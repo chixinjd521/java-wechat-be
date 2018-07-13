@@ -3,8 +3,6 @@ package com.dadiyang.wx.util;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
-import org.jetbrains.annotations.NotNull;
-
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
@@ -75,7 +73,6 @@ public class Crypt {
         return null;
     }
 
-    @NotNull
     private static SecretKey initSecretKeyForAES() throws NoSuchAlgorithmException {
         //1.构造密钥生成器，指定为AES算法,不区分大小写
         KeyGenerator keygen = KeyGenerator.getInstance("AES");
@@ -85,9 +82,9 @@ public class Crypt {
         random.setSeed(Conf.getValue("cryptRule").getBytes());
         keygen.init(128, random);
         //3.产生原始对称密钥
-        SecretKey original_key = keygen.generateKey();
+        SecretKey originalKey = keygen.generateKey();
         //4.获得原始对称密钥的字节数组
-        byte[] raw = original_key.getEncoded();
+        byte[] raw = originalKey.getEncoded();
         //5.根据字节数组生成AES密钥
         return new SecretKeySpec(raw, "AES");
     }

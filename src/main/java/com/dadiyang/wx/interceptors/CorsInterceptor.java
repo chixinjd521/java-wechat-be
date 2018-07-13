@@ -1,10 +1,9 @@
 package com.dadiyang.wx.interceptors;
 
-import com.google.common.net.HttpHeaders;
+import com.dadiyang.wx.util.Conf;
 import org.apache.log4j.Logger;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
-import com.dadiyang.wx.util.Conf;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -20,13 +19,14 @@ public class CorsInterceptor implements HandlerInterceptor {
     private static final Logger logger = Logger.getLogger(CorsInterceptor.class);
     private static final String EXCLUDED_URI = "/api/login";
     private static final List<String> ALLOW_ORIGINS = Conf.getValues("allowOrigins");
+    private static final String ORIGIN = "Origin";
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object o) throws Exception {
         if (EXCLUDED_URI.equalsIgnoreCase(request.getRequestURI())) {
             return true;
         }
-        String orgHeader = request.getHeader(HttpHeaders.ORIGIN);
+        String orgHeader = request.getHeader(ORIGIN);
         if (orgHeader != null && ALLOW_ORIGINS.contains(orgHeader)) {
             response.addHeader("Access-Control-Allow-Origin", orgHeader);
             response.addHeader("Access-Control-Allow-Credentials", "true");
