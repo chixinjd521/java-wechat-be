@@ -21,7 +21,7 @@ public class Conf {
     private static long version = System.currentTimeMillis();
 
     static {
-        try (InputStream in = new FileInputStream(getRootPath() + "/java-wechat-be/conf/server.properties")) {
+        try (InputStream in = new FileInputStream(System.getProperty("user.home") + "/java-wechat-be/conf/server.properties")) {
             properties = new Properties();
             properties.load(new InputStreamReader(in, "utf-8"));
         } catch (IOException e) {
@@ -46,12 +46,6 @@ public class Conf {
 
     public static int getIntValue(String name) {
         return Integer.parseInt(properties.getProperty(name));
-    }
-
-    private static String getRootPath() {
-        File file = new File(System.getProperty("user.dir"));
-        String path = file.getAbsolutePath().replace('\\', '/');
-        return path.substring(0, path.indexOf('/'));
     }
 
     public static long getVersion() {

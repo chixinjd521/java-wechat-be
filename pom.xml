@@ -4,7 +4,7 @@
     <groupId>dadiyang.com</groupId>
     <artifactId>java-wechat-be</artifactId>
     <packaging>war</packaging>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.0.0</version>
     <name>robot Maven Webapp</name>
     <url>http://maven.apache.org</url>
     <properties>
@@ -27,16 +27,15 @@
             <version>1.3</version>
             <scope>test</scope>
         </dependency>
-
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-test</artifactId>
+            <version>4.3.5.RELEASE</version>
+        </dependency>
         <!--Spring-->
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-core</artifactId>
-            <version>4.3.5.RELEASE</version>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-test</artifactId>
             <version>4.3.5.RELEASE</version>
         </dependency>
         <dependency>
@@ -160,9 +159,37 @@
             <version>3.7.3</version>
         </dependency>
     </dependencies>
+    <repositories>
+        <repository>
+            <id>aliyun</id>
+            <name>aliyun</name>
+            <url>http://maven.aliyun.com/nexus/content/groups/public/</url>
+            <layout>default</layout>
+            <releases>
+                <enabled>true</enabled>
+                <updatePolicy>never</updatePolicy>
+            </releases>
+            <snapshots>
+                <enabled>false</enabled>
+                <updatePolicy>never</updatePolicy>
+            </snapshots>
+        </repository>
+    </repositories>
+    <pluginRepositories>
+        <pluginRepository>
+            <id>aliyun</id>
+            <name>aliyun</name>
+            <url>http://maven.aliyun.com/nexus/content/groups/public/</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </pluginRepository>
+    </pluginRepositories>
     <build>
         <finalName>java-wechat-be</finalName>
-
         <plugins>
             <plugin>
                 <groupId>org.eclipse.jetty</groupId>
@@ -170,7 +197,7 @@
                 <version>9.4.11.v20180605</version>
                 <configuration>
                     <httpConnector>
-                        <port>8098</port>
+                        <port>8099</port>
                     </httpConnector>
                     <stopKey>shutdown</stopKey>
                     <stopPort>9966</stopPort>
@@ -216,6 +243,7 @@
                 <configuration>
                     <source>1.8</source>
                     <target>1.8</target>
+                    <skip>true</skip>
                     <encoding>UTF-8</encoding>
                 </configuration>
             </plugin>
