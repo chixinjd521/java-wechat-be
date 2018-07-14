@@ -14,9 +14,9 @@ import java.util.concurrent.TimeUnit;
  */
 public class RedisUtil {
 
-    private RedisTemplate<String, Object> redisTemplate;
+    private RedisTemplate<String, String> redisTemplate;
 
-    public void setRedisTemplate(RedisTemplate<String, Object> redisTemplate) {
+    public void setRedisTemplate(RedisTemplate<String, String> redisTemplate) {
         this.redisTemplate = redisTemplate;
     }
 
@@ -26,15 +26,15 @@ public class RedisUtil {
     }
 
 
-    public Long sadd(String key, Object... values) {
+    public Long sadd(String key, String... values) {
         return redisTemplate.opsForSet().add(key, values);
     }
 
-    public void set(String key, Object value) {
+    public void set(String key, String value) {
         redisTemplate.opsForValue().set(key, value);
     }
 
-    public Long lpush(String key, Object... values) {
+    public Long lpush(String key, String... values) {
         return redisTemplate.opsForList().leftPushAll(key, values);
     }
 
@@ -58,7 +58,7 @@ public class RedisUtil {
         }
     }
 
-    public Set<Object> smembers(String key) {
+    public Set<String> smembers(String key) {
         return redisTemplate.opsForSet().members(key);
     }
 
@@ -66,7 +66,7 @@ public class RedisUtil {
         return redisTemplate.opsForList().leftPop(key);
     }
 
-    public void setex(String key, Object value, int timeout) {
+    public void setex(String key, String value, int timeout) {
         redisTemplate.opsForValue().set(key, value);
         redisTemplate.expire(key, timeout, TimeUnit.SECONDS);
     }

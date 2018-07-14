@@ -66,7 +66,7 @@ public class WxServiceImpl implements WxService {
             // 加入队列，方便支持断点重发
             redisUtil.sadd(WX_SEND_MANY_SENDERS_KEY, client);
             redisUtil.set(WX_SEND_CONTENT_KEY + client, content);
-            Object[] idsArr = new String[ids.size()];
+            String[] idsArr = new String[ids.size()];
             ids.toArray(idsArr);
             redisUtil.lpush(WX_SEND_QUEUE_KEY + client, idsArr);
             new SendToManyRunner(client).start();
@@ -125,9 +125,9 @@ public class WxServiceImpl implements WxService {
         try {
             List<FriendGroupVo> friendGroupVos = new LinkedList<>();
             // 添加分组名称
-            Set<Object> groups = redisUtil.smembers(WX_FRIEND_GROUPS_KEY + client);
+            Set<String> groups = redisUtil.smembers(WX_FRIEND_GROUPS_KEY + client);
             for (Object groupName : groups) {
-                Set<Object> membersSet = redisUtil.smembers(WX_FRIEND_GROUP_MEMBER_KEY + client + ":" + groupName);
+                Set<String> membersSet = redisUtil.smembers(WX_FRIEND_GROUP_MEMBER_KEY + client + ":" + groupName);
                 List<String> members = membersSet.stream().map(Object::toString).collect(Collectors.toList());
                 FriendGroupVo vo = new FriendGroupVo((String) groupName, members);
                 friendGroupVos.add(vo);
@@ -155,7 +155,7 @@ public class WxServiceImpl implements WxService {
             // 添加分组名称
             redisUtil.sadd(WX_FRIEND_GROUPS_KEY + client, friendGroupVo.getName());
             // 分组名称对应的组员列表
-            redisUtil.sadd(WX_FRIEND_GROUP_MEMBER_KEY + client + ":" + friendGroupVo.getName(), friendGroupVo.getMembers().toArray());
+            redisUtil.sadd(WX_FRIEND_GROUP_MEMBER_KEY + client + ":" + friendGroupVo.getName(), friendGroupVo.getMembers().toArray(new String[]{}));
             return ResultBean.createSuccessResult("分组添加成功");
         } catch (Exception e) {
             logger.error("添加分组发生异常：client=" + client + ", friendGroupVo=" + JSON.toJSONString(friendGroupVo), e);
