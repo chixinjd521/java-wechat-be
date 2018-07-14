@@ -2,15 +2,6 @@
 <beans xmlns="http://www.springframework.org/schema/beans"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd">
-
-    <bean id="configProperties" class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
-        <property name="locations">
-            <list>
-                <value>classpath:jdbc.properties</value>
-            </list>
-        </property>
-    </bean>
-
     <!-- 多数据源配置 -->
     <bean id="wx" class="com.mchange.v2.c3p0.ComboPooledDataSource">
         <property name="driverClass" value="${jdbc.driverClassName}"/>
@@ -35,18 +26,18 @@
     <bean id="dataSource" class="com.dadiyang.wx.util.DynamicDataSource">
         <property name="targetDataSources">
             <map key-type="java.lang.String">
-                <entry value-ref="wx" key="wx"></entry>
+                <entry value-ref="wx" key="wx"/>
             </map>
         </property>
         <!-- 默认使用ds1的数据源 -->
-        <property name="defaultTargetDataSource" ref="wx"></property>
+        <property name="defaultTargetDataSource" ref="wx"/>
     </bean>
 
     <!-- 配置mybatisSqlSessionFactoryBean -->
     <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
         <property name="dataSource" ref="dataSource"/>
         <property name="mapperLocations" value="classpath:mapper/*.xml"/>
-        <property name="typeAliasesPackage" value="com.sinyat.api.weather.model" />
+        <property name="typeAliasesPackage" value="com.sinyat.api.weather.model"/>
         <property name="plugins">
             <array>
                 <bean class="com.github.pagehelper.PageHelper">

@@ -68,7 +68,7 @@
 
     <context-param>
         <param-name>webAppRootKey</param-name>
-        <param-value>wx.web.eserver</param-value>
+        <param-value>wx.web.root</param-value>
     </context-param>
     <listener>
         <listener-class>org.springframework.web.util.WebAppRootListener</listener-class>

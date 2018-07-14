@@ -2,15 +2,16 @@ package com.dadiyang.wx.controllers;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.dadiyang.wx.dto.WsMsg;
+import com.dadiyang.wx.dto.WxMessage;
+import com.dadiyang.wx.vo.WxPostMsgWsVo;
+import com.dadiyang.wx.ws.MsgPusher;
 import org.apache.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
-import com.dadiyang.wx.dto.WsMsg;
-import com.dadiyang.wx.dto.WxMessage;
-import com.dadiyang.wx.vo.WxPostMsgWsVo;
-import com.dadiyang.wx.ws.WsPool;
 
 import java.util.Date;
 
@@ -24,6 +25,12 @@ import java.util.Date;
 @RequestMapping("/api/post_message")
 public class WxPostController extends BaseController {
     private static final Logger logger = Logger.getLogger(WxPostController.class);
+    private final MsgPusher msgPusher;
+
+    @Autowired
+    public WxPostController(MsgPusher msgPusher) {
+        this.msgPusher = msgPusher;
+    }
 
     @RequestMapping(method = {RequestMethod.POST})
     public void postMessage(@RequestBody JSONObject wxMessageJsonObj) {
@@ -49,7 +56,7 @@ public class WxPostController extends BaseController {
             msgType = WsMsg.Type.WX_EVT_POST_MSG;
         }
         WsMsg<WxPostMsgWsVo> msg = new WsMsg<>(msgType.getCode(), vo);
-        WsPool.sendMessageToUser(client, JSON.toJSONStringWithDateFormat(msg, "yyyy-MM-dd HH:mm:ss"));
+        msgPusher.sendMsg(client, JSON.toJSONStringWithDateFormat(msg, "yyyy-MM-dd HH:mm:ss"));
     }
 
     private String toStringOrEmpty(Object obj) {

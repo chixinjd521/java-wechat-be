@@ -17,6 +17,7 @@ http://www.springframework.org/schema/mvc/spring-mvc-4.3.xsd">
 
     <!-- 启动包扫描功能，以便注册带有@Controllers、@service、@repository、@Component等注解的类成为spring的bean -->
     <context:component-scan base-package="com.dadiyang.wx.controllers" />
+    <context:component-scan base-package="com.dadiyang.wx.config" />
 
     <!--<mvc:resources mapping="/resources/**" location="/resources/" />-->
     <!-- 对模型视图名称的解析，在请求时模型视图名称添加前后缀 -->

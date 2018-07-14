@@ -1,11 +1,14 @@
 package com.dadiyang.wx.controllers;
 
-import com.dadiyang.wx.util.Conf;
+import com.dadiyang.wx.config.AppConfig;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.ModelAndView;
+
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * 主页
@@ -16,11 +19,19 @@ import org.springframework.web.servlet.ModelAndView;
 @Controller
 @RequestMapping("home")
 public class HomeController extends BaseController {
+    private final AppConfig appConfig;
+    private volatile AtomicLong version = new AtomicLong(System.currentTimeMillis());
+
+    @Autowired
+    public HomeController(AppConfig appConfig) {
+        this.appConfig = appConfig;
+    }
+
     @GetMapping()
     public ModelAndView index() {
         ModelAndView view = new ModelAndView("home/index");
-        view.addObject("version", String.valueOf(Conf.getVersion()));
-        view.addObject("cdnPath", Conf.getValue("cdnPath"));
+        view.addObject("version", String.valueOf(version.get()));
+        view.addObject("cdnPath", appConfig.getCdnPath());
         return view;
     }
 
@@ -29,6 +40,6 @@ public class HomeController extends BaseController {
      */
     @PostMapping("changeVn")
     public void changeVn() {
-        Conf.setVersion(System.currentTimeMillis());
+        version.incrementAndGet();
     }
 }

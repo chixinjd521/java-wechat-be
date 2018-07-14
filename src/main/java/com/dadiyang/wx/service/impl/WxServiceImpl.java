@@ -2,23 +2,24 @@ package com.dadiyang.wx.service.impl;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
-import com.dadiyang.wx.util.Conf;
-import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang.StringUtils;
-import org.apache.log4j.Logger;
-import org.jsoup.Jsoup;
-import org.springframework.stereotype.Service;
+import com.dadiyang.wx.config.AppConfig;
 import com.dadiyang.wx.dto.ResultBean;
 import com.dadiyang.wx.dto.SendManySingleResult;
 import com.dadiyang.wx.dto.WsMsg;
 import com.dadiyang.wx.service.WxService;
-import com.dadiyang.wx.util.JedisUtil;
+import com.dadiyang.wx.util.RedisUtil;
 import com.dadiyang.wx.util.TimeUtils;
 import com.dadiyang.wx.vo.FriendGroupVo;
-import com.dadiyang.wx.ws.WsPool;
+import com.dadiyang.wx.ws.MsgPusher;
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang.StringUtils;
+import org.apache.log4j.Logger;
+import org.jsoup.Jsoup;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
-import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * 微信相关服务实现类
@@ -35,7 +36,17 @@ public class WxServiceImpl implements WxService {
     private static final String WX_FRIEND_GROUPS_KEY = "wx_friend_groups:";
     private static final String WX_FRIEND_GROUP_MEMBER_KEY = "wx_friend_group_members:";
     private static final String GROUP_ID_SYMBOL = "@@";
-    private static final String OPENWX_SERVER = Conf.getValue("openwxServer");
+
+    private final String openwxServer;
+    private final MsgPusher msgPusher;
+    private final RedisUtil redisUtil;
+
+    @Autowired
+    public WxServiceImpl(AppConfig appConfig, MsgPusher msgPusher, RedisUtil redisUtil) {
+        openwxServer = appConfig.getOpenwxServer();
+        this.msgPusher = msgPusher;
+        this.redisUtil = redisUtil;
+    }
 
     /**
      * 通过redis消息群发
@@ -49,16 +60,17 @@ public class WxServiceImpl implements WxService {
             if (ids == null || ids.size() <= 0) {
                 return ResultBean.createFailResult("请选择需要发送的好友");
             }
-            if (JedisUtil.getInstance().sismember(WX_SEND_MANY_SENDERS_KEY, client)) {
+            if (redisUtil.sismember(WX_SEND_MANY_SENDERS_KEY, client)) {
                 return ResultBean.createFailResult("当前有未完成的任务正在进行，请稍候再试");
             }
             // 加入队列，方便支持断点重发
-            JedisUtil.getInstance().sadd(WX_SEND_MANY_SENDERS_KEY, client);
-            JedisUtil.getInstance().set(WX_SEND_CONTENT_KEY + client, content);
-            String[] idsArr = new String[ids.size()];
+            redisUtil.sadd(WX_SEND_MANY_SENDERS_KEY, client);
+            redisUtil.set(WX_SEND_CONTENT_KEY + client, content);
+            Object[] idsArr = new String[ids.size()];
             ids.toArray(idsArr);
-            JedisUtil.getInstance().lpush(WX_SEND_QUEUE_KEY + client, idsArr);
+            redisUtil.lpush(WX_SEND_QUEUE_KEY + client, idsArr);
             new SendToManyRunner(client).start();
+            logger.debug("群发信息已开启，共需要发送给 " + ids.size() + " 位好友，内容：" + content);
             return ResultBean.createSuccessResult("群发信息已开启，共需要发送给 " + ids.size() + " 位好友，内容：" + content);
         } catch (Exception e) {
             logger.error("微信群发发生异常：client=" + client + " ids=" + ids + " content=" + content, e);
@@ -70,9 +82,9 @@ public class WxServiceImpl implements WxService {
     @Override
     public ResultBean<String> continueSendToMany(String client) {
         try {
-            final String content = JedisUtil.getInstance().get(WX_SEND_CONTENT_KEY + client);
-            int all = JedisUtil.getInstance().llen(WX_SEND_QUEUE_KEY + client).intValue();
-            if (all > 0 && StringUtils.isNotBlank(content)) {
+            Object content = redisUtil.get(WX_SEND_CONTENT_KEY + client);
+            int all = redisUtil.llen(WX_SEND_QUEUE_KEY + client).intValue();
+            if (all > 0 && content != null && StringUtils.isNotBlank(content.toString())) {
                 new SendToManyRunner(client).start();
                 return ResultBean.createSuccessResult("共有 " + all + " 条信息需要继续发送，内容为：" + content);
             } else {
@@ -89,11 +101,11 @@ public class WxServiceImpl implements WxService {
     public ResultBean<String> cleanMission(String client) {
         try {
             // 移除发送人
-            long rs = JedisUtil.getInstance().srem(WX_SEND_MANY_SENDERS_KEY, client);
+            long rs = redisUtil.srem(WX_SEND_MANY_SENDERS_KEY, client);
             // 删除内容
-            JedisUtil.getInstance().del(WX_SEND_CONTENT_KEY + client);
+            redisUtil.del(WX_SEND_CONTENT_KEY + client);
             // 清除队列
-            JedisUtil.getInstance().del(WX_SEND_QUEUE_KEY + client);
+            redisUtil.del(WX_SEND_QUEUE_KEY + client);
             if (rs > 0) {
                 return ResultBean.createSuccessResult("取消任务成功");
             } else {
@@ -113,10 +125,11 @@ public class WxServiceImpl implements WxService {
         try {
             List<FriendGroupVo> friendGroupVos = new LinkedList<>();
             // 添加分组名称
-            Set<String> groups = JedisUtil.getInstance().smembers(WX_FRIEND_GROUPS_KEY + client);
-            for (String groupName : groups) {
-                Set<String> members = JedisUtil.getInstance().smembers(WX_FRIEND_GROUP_MEMBER_KEY + client + ":" + groupName);
-                FriendGroupVo vo = new FriendGroupVo(groupName, new ArrayList<>(members));
+            Set<Object> groups = redisUtil.smembers(WX_FRIEND_GROUPS_KEY + client);
+            for (Object groupName : groups) {
+                Set<Object> membersSet = redisUtil.smembers(WX_FRIEND_GROUP_MEMBER_KEY + client + ":" + groupName);
+                List<String> members = membersSet.stream().map(Object::toString).collect(Collectors.toList());
+                FriendGroupVo vo = new FriendGroupVo((String) groupName, members);
                 friendGroupVos.add(vo);
             }
             // 分组名称对应的组员列表
@@ -140,9 +153,9 @@ public class WxServiceImpl implements WxService {
         }
         try {
             // 添加分组名称
-            JedisUtil.getInstance().sadd(WX_FRIEND_GROUPS_KEY + client, friendGroupVo.getName());
+            redisUtil.sadd(WX_FRIEND_GROUPS_KEY + client, friendGroupVo.getName());
             // 分组名称对应的组员列表
-            JedisUtil.getInstance().sadd(WX_FRIEND_GROUP_MEMBER_KEY + client + ":" + friendGroupVo.getName(), friendGroupVo.getMembers().toArray(new String[0]));
+            redisUtil.sadd(WX_FRIEND_GROUP_MEMBER_KEY + client + ":" + friendGroupVo.getName(), friendGroupVo.getMembers().toArray());
             return ResultBean.createSuccessResult("分组添加成功");
         } catch (Exception e) {
             logger.error("添加分组发生异常：client=" + client + ", friendGroupVo=" + JSON.toJSONString(friendGroupVo), e);
@@ -162,11 +175,11 @@ public class WxServiceImpl implements WxService {
             String memberKey = WX_FRIEND_GROUP_MEMBER_KEY + client + ":" + friendGroupVo.getName();
             if (CollectionUtils.isEmpty(friendGroupVo.getMembers())) {
                 // 删除分组名称
-                JedisUtil.getInstance().srem(WX_FRIEND_GROUPS_KEY + client, friendGroupVo.getName());
+                redisUtil.srem(WX_FRIEND_GROUPS_KEY + client, friendGroupVo.getName());
                 // 删除名称对应的组员列表
-                JedisUtil.getInstance().del(memberKey);
+                redisUtil.del(memberKey);
             } else {
-                JedisUtil.getInstance().srem(memberKey, friendGroupVo.getMembers().toArray(new String[0]));
+                redisUtil.srem(memberKey, friendGroupVo.getMembers().toArray());
             }
             return ResultBean.createSuccessResult("分组删除成功");
         } catch (Exception e) {
@@ -175,6 +188,27 @@ public class WxServiceImpl implements WxService {
         }
     }
 
+    private Integer sendFriendMsg(String client, String uid, String message) {
+        try {
+            Map<String, String> data = new HashMap<>();
+            data.put("client", client);
+            data.put("content", message);
+            data.put("id", uid);
+            String rsp = "";
+            if (uid.startsWith(GROUP_ID_SYMBOL)) {
+                logger.debug(client + ": 发送群信息：uid=" + uid + ", message=" + message);
+                rsp = Jsoup.connect(openwxServer + "/openwx/send_group_message").data(data).ignoreContentType(true).get().text();
+            } else {
+                logger.debug(client + ": 发送好友信息：uid=" + uid + ", message=" + message);
+                rsp = Jsoup.connect(openwxServer + "/openwx/send_friend_message").data(data).ignoreContentType(true).get().text();
+            }
+            JSONObject obj = JSON.parseObject(rsp);
+            return obj.getInteger("code");
+        } catch (Exception e) {
+            logger.error("发送消息发生异常", e);
+            return -1;
+        }
+    }
 
     private class SendToManyRunner extends Thread {
         private String client;
@@ -188,17 +222,26 @@ public class WxServiceImpl implements WxService {
             int done = 0;
             boolean suc = false;
             final String queueKey = WX_SEND_QUEUE_KEY + client;
-            final String content = JedisUtil.getInstance().get(WX_SEND_CONTENT_KEY + client);
-            int all = JedisUtil.getInstance().llen(queueKey).intValue();
+            Object contentCache = redisUtil.get(WX_SEND_CONTENT_KEY + client);
+            if (contentCache == null) {
+                logger.info("内容不存在: queueKey=" + queueKey);
+                return;
+            }
+            String content = contentCache.toString();
+            if (StringUtils.isBlank(content)) {
+                logger.info("内容不存在: queueKey=" + queueKey);
+                return;
+            }
+            int all = redisUtil.llen(queueKey).intValue();
             while (true) {
-                String uid = JedisUtil.getInstance().lpop(queueKey);
-                if (StringUtils.isBlank(uid)) {
+                Object uid = redisUtil.lpop(queueKey);
+                if (uid == null || StringUtils.isBlank(uid.toString())) {
                     suc = true;
                     break;
                 }
-                Integer code = sendFriendMsg(client, uid, content);
+                Integer code = sendFriendMsg(client, uid.toString(), content);
                 done++;
-                SendManySingleResult result = new SendManySingleResult(code, uid, all, done);
+                SendManySingleResult result = new SendManySingleResult(code, uid.toString(), all, done);
                 result.setDesc(result.toString());
                 if (code != null && code == 1) {
                     result.setDesc("登录状态无效");
@@ -206,7 +249,7 @@ public class WxServiceImpl implements WxService {
                 }
                 TimeUtils.randomSleep(500, 3000);
                 WsMsg wsMsg = new WsMsg<>(WsMsg.Type.WX_SEND_MANY.getCode(), result);
-                WsPool.sendMessageToUser(client, JSON.toJSONString(wsMsg));
+                msgPusher.sendMsg(client, JSON.toJSONString(wsMsg));
             }
             // 完成任务则清理任务
             if (suc) {
@@ -214,30 +257,10 @@ public class WxServiceImpl implements WxService {
                     SendManySingleResult result = new SendManySingleResult(-1, "", all, done);
                     result.setDesc("任务被取消，进度：" + done + "/" + all);
                     WsMsg wsMsg = new WsMsg<>(WsMsg.Type.WX_SEND_MANY.getCode(), result);
-                    WsPool.sendMessageToUser(client, JSON.toJSONString(wsMsg));
+                    msgPusher.sendMsg(client, JSON.toJSONString(wsMsg));
                 }
                 cleanMission(client);
             }
-        }
-    }
-
-    private Integer sendFriendMsg(String client, String uid, String message) {
-        try {
-            Map<String, String> data = new HashMap<>();
-            data.put("client", client);
-            data.put("content", message);
-            data.put("id", uid);
-            String rsp;
-            if (uid.startsWith(GROUP_ID_SYMBOL)) {
-                rsp = Jsoup.connect(OPENWX_SERVER + "/openwx/send_group_message").data(data).ignoreContentType(true).get().text();
-            } else {
-                rsp = Jsoup.connect(OPENWX_SERVER + "/openwx/send_friend_message").data(data).ignoreContentType(true).get().text();
-            }
-            JSONObject obj = JSON.parseObject(rsp);
-            return obj.getInteger("code");
-        } catch (IOException e) {
-            logger.error("发送消息发生异常", e);
-            return -1;
         }
     }
 
