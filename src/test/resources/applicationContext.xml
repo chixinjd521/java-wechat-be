@@ -7,9 +7,9 @@
     <bean id="serverConfig" class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
         <property name="locations">
             <list>
-                <value>file:${user.home}/java-wechat-be/conf/server.properties</value>
-                <value>file:${user.home}/java-wechat-be/conf/jdbc.properties</value>
-                <value>file:${user.home}/java-wechat-be/conf/redis.properties</value>
+                <value>classpath:conf/server.properties</value>
+                <value>classpath:conf/jdbc.properties</value>
+                <value>classpath:conf/redis.properties</value>
             </list>
         </property>
     </bean>

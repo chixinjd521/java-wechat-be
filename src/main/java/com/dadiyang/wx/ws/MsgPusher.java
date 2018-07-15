@@ -28,7 +28,9 @@ public class MsgPusher {
      * @return 成功或失败，只要用户有一个客户端推送成功就算成功
      */
     public boolean sendMsg(String username, String message) {
-        if (userSessions.get(username) == null) {
+        if (StringUtils.isBlank(username)
+                || userSessions.get(username) == null
+                || StringUtils.isBlank(message)) {
             return false;
         }
         boolean rs = false;
