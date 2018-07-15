@@ -29,7 +29,7 @@
 
 ### 安装 (Linux/MacOS)
 
-本项目通过 [**maven**](http://maven.apache.org/download.cgi) 来管理，使用**`jetty`**插件的方式来启动。**pom.xml** 文件中已经指定了 aliyun 镜像，以加快依赖加载速度。
+本项目通过 [**maven**](http://maven.apache.org/download.cgi) 来管理，使用`jetty`插件的方式来启动。**pom.xml** 文件中已经指定了 aliyun 镜像，以加快依赖加载速度。
 
 * 安装 [Mojo-weixin](https://github.com/sjdy521/Mojo-Weixin)，此项目有非常好的文档，请直接参照安装并启动
 
@@ -82,7 +82,7 @@ cd java-wechat-be
 mkdir ~/java-wechat-be
 # 将需要自定义配置的配置文件复制过去
 cp -r src/main/resources/conf ~/java-wechat-be/
-# 启动
+# 启动，首次安装要加载很多依赖，比较久请耐心等待
 mvn jetty:run
 ```
 默认端口是 8282，项目启动后可以访问 http://localhost:8282/home 进入项目

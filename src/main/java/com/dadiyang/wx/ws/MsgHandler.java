@@ -35,7 +35,7 @@ public class MsgHandler extends AbstractWebSocketHandler {
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
         super.handleTextMessage(session, message);
-        System.out.println("收到ws消息：" + message.getPayload());
+        logger.debug("收到ws消息：" + message.getPayload());
     }
 
     @Override
