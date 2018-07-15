@@ -16,7 +16,6 @@
     <!-- 配置component所在的包，自动加载需要管理的Bean -->
     <context:component-scan
             base-package="com.dadiyang.wx.service,com.dadiyang.wx.dao,com.dadiyang.wx,com.dadiyang.wx.config"/>
-    <import resource="spring-mybatis.xml"/>
-    <import resource="spring-redis.xml"/>
+    <import resource="spring-*.xml"/>
 
 </beans>
