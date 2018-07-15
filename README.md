@@ -37,16 +37,16 @@
 
 ```bash
 # 下载安装包
-wget http://mirror.bit.edu.cn/apache/maven/maven-3/3.5.2/binaries/apache-maven-3.5.2-bin.tar.gz
+wget http://mirror.bit.edu.cn/apache/maven/maven-3/3.5.4/binaries/apache-maven-3.5.4-bin.tar.gz
 # 解压
-tar -zxvf apache-maven-3.5.2-bin.tar.gz 
-cd apache-maven-3.5.2-bin.tar.gz 
-# 拿到当前路径，假设得到的路径是 /var/local/apache-maven-3.5.2
+tar -zxvf apache-maven-3.5.4-bin.tar.gz 
+cd apache-maven-3.5.4-bin.tar.gz 
+# 拿到当前路径，假设得到的路径是 /var/local/apache-maven-3.5.4
 pwd
 # 配置环境变量
 vim /etc/profile
 # 在 /etc/profile 文件后面添加 MAVEN_HOME 设置刚刚拿到的路径
-export MAVEN_HOME=/var/local/apache-maven-3.5.2
+export MAVEN_HOME=/var/local/apache-maven-3.5.4
 export MAVEN_HOME
 export PATH=$PATH:$MAVEN_HOME/bin
 # 加载

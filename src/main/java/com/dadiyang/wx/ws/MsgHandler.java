@@ -14,6 +14,8 @@ import org.springframework.web.socket.handler.AbstractWebSocketHandler;
 @Service
 public class MsgHandler extends AbstractWebSocketHandler {
     private static final Logger logger = Logger.getLogger(MsgHandler.class);
+    private static final String PING = "~ping~";
+    private static final String PONG = "~pong~";
 
     private final MsgPusher msgPusher;
 
@@ -35,13 +37,17 @@ public class MsgHandler extends AbstractWebSocketHandler {
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
         super.handleTextMessage(session, message);
-        logger.debug("收到ws消息：" + message.getPayload());
+        if (PING.equals(message.getPayload())) {
+            // 回复心跳
+            session.sendMessage(new TextMessage(PONG));
+        } else {
+            logger.debug("收到ws消息：" + message.getPayload());
+        }
     }
 
     @Override
     public void handleTransportError(WebSocketSession session, Throwable exception) throws Exception {
         super.handleTransportError(session, exception);
     }
-
 
 }
